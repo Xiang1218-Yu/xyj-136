@@ -7,7 +7,7 @@ import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
 
 function App() {
-  const { gameState, selectTool, addBuilding, damageBuildings, removeBuildings, resetBuildings } = useGameState();
+  const { gameState, selectTool, addBuilding, damageBuildings, removeBuildings, removeBuilding, resetBuildings } = useGameState();
   
   const { activeDisasters, recentDisaster, triggerRandomDisaster } = useDisasters({
     buildings: gameState.buildings,
@@ -21,6 +21,7 @@ function App() {
         buildings={gameState.buildings}
         selectedTool={gameState.selectedTool}
         onAddBuilding={addBuilding}
+        onRemoveBuilding={removeBuilding}
         lifeIndex={gameState.lifeIndex}
         disasters={activeDisasters}
       />

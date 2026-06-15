@@ -1,9 +1,9 @@
-import { useRef, useMemo, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame, ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../utils/helpers';
 import { createPlanetTexture, createCloudTexture } from '../utils/texture';
-import { Building, ActiveDisaster } from '../types/game';
+import { Building, ActiveDisaster, ToolType } from '../types/game';
 import { Forest } from './Buildings/Forest';
 import { Glacier } from './Buildings/Glacier';
 import { City } from './Buildings/City';
@@ -14,6 +14,8 @@ interface PlanetProps {
   onClick?: (point: THREE.Vector3) => void;
   onPointerOver?: () => void;
   onPointerOut?: () => void;
+  onRemoveBuilding?: (id: string) => void;
+  selectedTool?: ToolType | null;
   lifeIndex: number;
   buildings?: Building[];
   disasters?: ActiveDisaster[];
@@ -57,11 +59,12 @@ function BuildingHealthBar({ health, maxHealth }: { health: number; maxHealth: n
   );
 }
 
-export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildings = [], disasters = [] }: PlanetProps) {
+export function Planet({ onClick, onPointerOver, onPointerOut, onRemoveBuilding, selectedTool, lifeIndex, buildings = [], disasters = [] }: PlanetProps) {
   const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
   const terrainRef = useRef<THREE.Mesh>(null);
+  const [hoveredBuildingId, setHoveredBuildingId] = useState<string | null>(null);
 
   const planetTexture = useMemo(() => createPlanetTexture(), []);
   const cloudTexture = useMemo(() => createCloudTexture(), []);
@@ -160,6 +163,8 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
         const healthPercent = building.health / building.maxHealth;
         const isDamaged = building.damaged;
         const buildingOpacity = isDamaged ? 0.7 + Math.sin(Date.now() * 0.005) * 0.1 : 1;
+        const isDeleteMode = selectedTool === 'delete';
+        const isHovered = hoveredBuildingId === building.id;
 
         let BuildingComponent;
         if (building.type === 'forest') BuildingComponent = Forest;
@@ -167,12 +172,38 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
         else if (building.type === 'city') BuildingComponent = City;
         else BuildingComponent = Grassland;
 
+        const handleBuildingClick = (e: ThreeEvent<MouseEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode && onRemoveBuilding) {
+            onRemoveBuilding(building.id);
+          }
+        };
+
+        const handleBuildingPointerOver = (e: ThreeEvent<PointerEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode) {
+            setHoveredBuildingId(building.id);
+            document.body.style.cursor = 'pointer';
+          }
+        };
+
+        const handleBuildingPointerOut = (e: ThreeEvent<PointerEvent>) => {
+          e.stopPropagation();
+          if (isDeleteMode) {
+            setHoveredBuildingId(null);
+            document.body.style.cursor = 'auto';
+          }
+        };
+
         return (
           <group 
             key={building.id} 
             position={position} 
             quaternion={quaternion} 
             scale={building.scale}
+            onClick={handleBuildingClick}
+            onPointerOver={handleBuildingPointerOver}
+            onPointerOut={handleBuildingPointerOut}
           >
             <group scale={healthPercent < 0.3 ? [0.85, 0.85, 0.85] : [1, 1, 1]}>
               <BuildingComponent position={[0, 0, 0]} scale={1} />
@@ -184,6 +215,12 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
               <mesh position={[0, 0.08, 0]}>
                 <sphereGeometry args={[0.02 + Math.random() * 0.01, 8, 8]} />
                 <meshBasicMaterial color="#666666" transparent opacity={0.6} />
+              </mesh>
+            )}
+            {isDeleteMode && isHovered && (
+              <mesh position={[0, 0.05, 0]}>
+                <ringGeometry args={[0.15, 0.17, 32]} />
+                <meshBasicMaterial color="#ef4444" transparent opacity={0.9} side={THREE.DoubleSide} />
               </mesh>
             )}
           </group>

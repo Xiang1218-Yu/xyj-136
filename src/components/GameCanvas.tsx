@@ -6,13 +6,14 @@ import * as THREE from 'three';
 import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Starfield } from './Starfield';
-import { Building, BuildingType, ActiveDisaster } from '../types/game';
+import { Building, BuildingType, ToolType, ActiveDisaster } from '../types/game';
 import { PLANET_RADIUS } from '../utils/helpers';
 
 interface GameCanvasProps {
   buildings: Building[];
-  selectedTool: BuildingType | null;
+  selectedTool: ToolType | null;
   onAddBuilding: (type: BuildingType, position: [number, number, number]) => void;
+  onRemoveBuilding: (id: string) => void;
   lifeIndex: number;
   disasters?: ActiveDisaster[];
 }
@@ -21,13 +22,14 @@ function SceneContent({
   buildings,
   selectedTool,
   onAddBuilding,
+  onRemoveBuilding,
   lifeIndex,
   disasters = [],
 }: GameCanvasProps) {
   const [hovered, setHovered] = useState(false);
 
   const handlePlanetClick = (point: THREE.Vector3) => {
-    if (selectedTool) {
+    if (selectedTool && selectedTool !== 'delete') {
       const normalized = point.clone().normalize();
       const surfacePoint = normalized.multiplyScalar(PLANET_RADIUS);
       onAddBuilding(selectedTool, [surfacePoint.x, surfacePoint.y, surfacePoint.z]);
@@ -51,6 +53,8 @@ function SceneContent({
 
       <Planet
         onClick={handlePlanetClick}
+        onRemoveBuilding={onRemoveBuilding}
+        selectedTool={selectedTool}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         lifeIndex={lifeIndex}

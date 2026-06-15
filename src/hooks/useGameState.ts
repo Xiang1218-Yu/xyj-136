@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import * as THREE from 'three';
-import { Building, BuildingType, GameState } from '../types/game';
+import { Building, BuildingType, GameState, ToolType } from '../types/game';
 import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS } from '../utils/helpers';
 
 function createInitialBuildings(): Building[] {
@@ -116,7 +116,7 @@ export function useGameState() {
     };
   });
 
-  const selectTool = useCallback((tool: BuildingType | null) => {
+  const selectTool = useCallback((tool: ToolType | null) => {
     setGameState(prev => ({ ...prev, selectedTool: tool }));
   }, []);
 
@@ -169,6 +169,14 @@ export function useGameState() {
     });
   }, []);
 
+  const removeBuilding = useCallback((id: string) => {
+    setGameState(prev => {
+      const newBuildings = prev.buildings.filter(b => b.id !== id);
+      const counts = updateCountsAndLifeIndex(newBuildings);
+      return { ...prev, buildings: newBuildings, ...counts };
+    });
+  }, []);
+
   const resetBuildings = useCallback(() => {
     setGameState(prev => ({
       ...prev,
@@ -187,6 +195,7 @@ export function useGameState() {
     addBuilding,
     damageBuildings,
     removeBuildings,
+    removeBuilding,
     resetBuildings,
   };
 }

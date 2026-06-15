@@ -1,4 +1,5 @@
 export type BuildingType = 'forest' | 'glacier' | 'city' | 'grassland';
+export type ToolType = BuildingType | 'delete';
 
 export type DisasterType = 'earthquake' | 'volcano' | 'flood' | 'meteor';
 
@@ -15,7 +16,7 @@ export interface Building {
 
 export interface GameState {
   buildings: Building[];
-  selectedTool: BuildingType | null;
+  selectedTool: ToolType | null;
   lifeIndex: number;
   forestCount: number;
   glacierCount: number;

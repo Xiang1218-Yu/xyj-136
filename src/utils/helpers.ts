@@ -1,4 +1,13 @@
-import { BuildingType, BuildingConfig, DisasterType, DisasterConfig } from '../types/game';
+import { BuildingType, BuildingConfig, DisasterType, DisasterConfig, ToolType } from '../types/game';
+
+interface ToolConfig {
+  type: ToolType;
+  name: string;
+  color: string;
+  icon: string;
+  description?: string;
+  lifeValue?: number;
+}
 
 export const BUILDING_CONFIGS: Record<BuildingType, BuildingConfig> = {
   forest: {
@@ -133,3 +142,14 @@ export function getRandomDisasterInterval(type: DisasterType): number {
   const config = DISASTER_CONFIGS[type];
   return config.minInterval + Math.random() * (config.maxInterval - config.minInterval);
 }
+
+export const TOOL_CONFIGS: Record<ToolType, ToolConfig> = {
+  ...BUILDING_CONFIGS,
+  delete: {
+    type: 'delete',
+    name: '删除',
+    color: '#ef4444',
+    icon: '🗑️',
+    description: '点击建筑即可删除',
+  },
+};
