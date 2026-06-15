@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Starfield } from './Starfield';
-import { Forest } from './Buildings/Forest';
-import { Glacier } from './Buildings/Glacier';
-import { City } from './Buildings/City';
-import { Grassland } from './Buildings/Grassland';
 import { Building, BuildingType } from '../types/game';
 import { PLANET_RADIUS } from '../utils/helpers';
 
@@ -17,73 +14,6 @@ interface GameCanvasProps {
   selectedTool: BuildingType | null;
   onAddBuilding: (type: BuildingType, position: [number, number, number]) => void;
   lifeIndex: number;
-}
-
-function BuildingRenderer({ buildings }: { buildings: Building[] }) {
-  return (
-    <>
-      {buildings.map((building) => {
-        const normal = new THREE.Vector3(...building.position).normalize();
-        const surfacePos = normal.clone().multiplyScalar(PLANET_RADIUS + 0.02);
-        const position: [number, number, number] = [
-          surfacePos.x,
-          surfacePos.y,
-          surfacePos.z,
-        ];
-
-        const up = new THREE.Vector3(0, 1, 0);
-        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, normal);
-        const euler = new THREE.Euler().setFromQuaternion(quaternion);
-
-        const rotation: [number, number, number] = [
-          euler.x + building.rotation[0],
-          euler.y + building.rotation[1],
-          euler.z + building.rotation[2],
-        ];
-
-        switch (building.type) {
-          case 'forest':
-            return (
-              <Forest
-                key={building.id}
-                position={position}
-                scale={building.scale}
-                rotation={rotation}
-              />
-            );
-          case 'glacier':
-            return (
-              <Glacier
-                key={building.id}
-                position={position}
-                scale={building.scale}
-                rotation={rotation}
-              />
-            );
-          case 'city':
-            return (
-              <City
-                key={building.id}
-                position={position}
-                scale={building.scale}
-                rotation={rotation}
-              />
-            );
-          case 'grassland':
-            return (
-              <Grassland
-                key={building.id}
-                position={position}
-                scale={building.scale}
-                rotation={rotation}
-              />
-            );
-          default:
-            return null;
-        }
-      })}
-    </>
-  );
 }
 
 function SceneContent({
@@ -122,9 +52,8 @@ function SceneContent({
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         lifeIndex={lifeIndex}
+        buildings={buildings}
       />
-
-      {/* <BuildingRenderer buildings={buildings} /> */}
 
       <OrbitControls
         enablePan={true}
@@ -137,6 +66,19 @@ function SceneContent({
         enableDamping
         dampingFactor={0.05}
       />
+
+      <EffectComposer>
+        <Bloom
+          intensity={0.6}
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.9}
+          mipmapBlur
+        />
+        <Vignette
+          offset={0.5}
+          darkness={0.5}
+        />
+      </EffectComposer>
     </>
   );
 }

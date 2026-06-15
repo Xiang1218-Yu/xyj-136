@@ -116,10 +116,10 @@ export function Starfield() {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={0.15}
+          size={0.25}
           vertexColors
           transparent
-          opacity={0.6}
+          opacity={0.85}
           sizeAttenuation
         />
       </points>

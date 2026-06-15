@@ -27,11 +27,21 @@ export function Moon() {
       </mesh>
 
       <mesh position={[8, 2, 0]}>
-        <sphereGeometry args={[0.55, 32, 32]} />
+        <sphereGeometry args={[0.65, 32, 32]} />
         <meshBasicMaterial
           color="#ffeedd"
           transparent
-          opacity={0.1}
+          opacity={0.15}
+          side={THREE.BackSide}
+        />
+      </mesh>
+
+      <mesh position={[8, 2, 0]}>
+        <sphereGeometry args={[0.8, 32, 32]} />
+        <meshBasicMaterial
+          color="#ffd700"
+          transparent
+          opacity={0.06}
           side={THREE.BackSide}
         />
       </mesh>
