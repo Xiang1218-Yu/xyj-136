@@ -36,9 +36,9 @@ function DisasterInfoModal({
   const config = DISASTER_CONFIGS[type];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div
-        className="relative max-w-2xl w-full mx-4 rounded-3xl overflow-hidden shadow-2xl border-2"
+        className="relative max-w-2xl w-full rounded-3xl overflow-hidden shadow-2xl border-2 max-h-[90vh] flex flex-col"
         style={{
           backgroundColor: '#0a0e27',
           borderColor: `${config.color}60`,
@@ -46,12 +46,12 @@ function DisasterInfoModal({
         }}
       >
         <div
-          className="h-2"
+          className="h-2 flex-shrink-0"
           style={{ backgroundColor: config.color }}
         />
         
-        <div className="p-8">
-          <div className="flex items-start justify-between mb-6">
+        <div className="p-8 overflow-y-auto overflow-x-hidden">
+          <div className="flex items-start justify-between mb-6 sticky top-0 z-10 -mt-2 -mx-2 px-2 py-2 bg-opacity-95 backdrop-blur-sm" style={{ backgroundColor: 'rgba(10, 14, 39, 0.95)' }}>
             <div className="flex items-center gap-4">
               <div
                 className="text-6xl"
@@ -75,7 +75,7 @@ function DisasterInfoModal({
             </div>
             <button
               onClick={onClose}
-              className="text-white/40 hover:text-white text-2xl transition-colors"
+              className="text-white/40 hover:text-white text-2xl transition-colors flex-shrink-0"
             >
               ✕
             </button>

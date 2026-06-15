@@ -26,18 +26,18 @@ export function DisasterInfoPanel() {
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div
-            className="relative max-w-5xl w-full mx-4 rounded-3xl overflow-hidden shadow-2xl border-2"
+            className="relative max-w-5xl w-full rounded-3xl overflow-hidden shadow-2xl border-2 max-h-[90vh] flex flex-col"
             style={{
               backgroundColor: '#0a0e27',
               borderColor: 'rgba(255,255,255,0.1)',
             }}
           >
-            <div className="bg-gradient-to-r from-purple-600/30 via-blue-600/30 to-cyan-600/30 h-2" />
+            <div className="bg-gradient-to-r from-purple-600/30 via-blue-600/30 to-cyan-600/30 h-2 flex-shrink-0" />
             
-            <div className="p-8">
-              <div className="flex items-center justify-between mb-8">
+            <div className="p-8 overflow-y-auto overflow-x-hidden">
+              <div className="flex items-center justify-between mb-8 sticky top-0 z-10 -mt-2 -mx-2 px-2 py-3 backdrop-blur-sm" style={{ backgroundColor: 'rgba(10, 14, 39, 0.95)' }}>
                 <div>
                   <h2
                     className="text-4xl font-bold text-white mb-2"
@@ -54,7 +54,7 @@ export function DisasterInfoPanel() {
                     setIsOpen(false);
                     setSelectedType(null);
                   }}
-                  className="text-white/40 hover:text-white text-3xl transition-colors"
+                  className="text-white/40 hover:text-white text-3xl transition-colors flex-shrink-0 ml-4"
                 >
                   ✕
                 </button>
