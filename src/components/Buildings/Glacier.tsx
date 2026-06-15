@@ -1,5 +1,8 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { createIceTexture } from '../../utils/texture';
+import { useDayNight } from '../../contexts/DayNightContext';
+import * as THREE from 'three';
 
 interface BuildingProps {
   position: [number, number, number];
@@ -14,10 +17,14 @@ interface IcebergProps {
 }
 
 function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: IcebergProps) {
+  const { nightFactor, isNight } = useDayNight();
   const iceTexture = useMemo(() => createIceTexture(), []);
 
   const height = 0.25 + Math.random() * 0.15;
   const radius = 0.1 + Math.random() * 0.05;
+
+  const iceEmissiveIntensity = isNight ? nightFactor * 0.4 : 0.1;
+  const iceTransmission = isNight ? 0.2 + nightFactor * 0.3 : 0.3;
 
   return (
     <group position={position} scale={scale} rotation={rotation}>
@@ -30,10 +37,12 @@ function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: Iceb
           opacity={0.88}
           roughness={0.15}
           metalness={0.05}
-          transmission={0.3}
+          transmission={iceTransmission}
           thickness={0.5}
           clearcoat={0.8}
           clearcoatRoughness={0.2}
+          emissive="#88ccff"
+          emissiveIntensity={iceEmissiveIntensity}
         />
       </mesh>
 
@@ -45,10 +54,12 @@ function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: Iceb
           opacity={0.75}
           roughness={0.1}
           metalness={0}
-          transmission={0.5}
+          transmission={iceTransmission * 1.2}
           thickness={0.8}
           clearcoat={1}
           clearcoatRoughness={0.1}
+          emissive="#66aadd"
+          emissiveIntensity={iceEmissiveIntensity * 0.8}
         />
       </mesh>
 
@@ -60,9 +71,11 @@ function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: Iceb
           opacity={0.9}
           roughness={0.08}
           metalness={0}
-          transmission={0.4}
+          transmission={iceTransmission}
           thickness={0.3}
           clearcoat={0.9}
+          emissive="#99ddff"
+          emissiveIntensity={iceEmissiveIntensity * 0.6}
         />
       </mesh>
 
@@ -74,22 +87,27 @@ function Iceberg({ position = [0, 0, 0], scale = 1, rotation = [0, 0, 0] }: Iceb
           opacity={0.92}
           roughness={0.05}
           metalness={0}
-          transmission={0.35}
+          transmission={iceTransmission * 0.8}
           thickness={0.4}
           clearcoat={1}
+          emissive="#aaeeff"
+          emissiveIntensity={iceEmissiveIntensity * 0.7}
         />
       </mesh>
 
-      <mesh position={[radius * 0.15, height * 0.9, 0]}>
-        <sphereGeometry args={[radius * 0.08, 6, 6]} />
-        <meshStandardMaterial
-          color="#a8d0ff"
-          emissive="#6ab0ff"
-          emissiveIntensity={0.3}
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
+      {isNight && (
+        <mesh position={[radius * 0.15, height * 0.9, 0]}>
+          <sphereGeometry args={[radius * 0.1, 6, 6]} />
+          <meshStandardMaterial
+            color="#a8d0ff"
+            emissive="#6ab0ff"
+            emissiveIntensity={nightFactor * 0.8}
+            transparent
+            opacity={0.8}
+            toneMapped={false}
+          />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -99,9 +117,21 @@ function IceCrystal({
   scale = 1,
   rotation = [0, 0, 0],
 }: IcebergProps) {
+  const { nightFactor, isNight } = useDayNight();
+  const crystalRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state, delta) => {
+    if (crystalRef.current) {
+      crystalRef.current.rotation.y += delta * 0.5;
+      crystalRef.current.rotation.x += delta * 0.3;
+    }
+  });
+
+  const crystalEmissive = isNight ? nightFactor * 0.6 : 0.1;
+
   return (
     <group position={position} scale={scale} rotation={rotation}>
-      <mesh castShadow>
+      <mesh ref={crystalRef} castShadow>
         <octahedronGeometry args={[0.03, 0]} />
         <meshPhysicalMaterial
           color="#c0e0ff"
@@ -109,11 +139,13 @@ function IceCrystal({
           opacity={0.85}
           roughness={0.05}
           metalness={0}
-          transmission={0.6}
+          transmission={isNight ? 0.4 + nightFactor * 0.3 : 0.6}
           thickness={0.3}
           clearcoat={1}
           clearcoatRoughness={0.05}
           envMapIntensity={1}
+          emissive="#88ddff"
+          emissiveIntensity={crystalEmissive}
         />
       </mesh>
       <mesh position={[0.015, -0.01, 0.01]} rotation={[0.5, 0.3, 0]} castShadow>
@@ -123,16 +155,66 @@ function IceCrystal({
           transparent
           opacity={0.9}
           roughness={0.05}
-          transmission={0.5}
+          transmission={isNight ? 0.3 + nightFactor * 0.2 : 0.5}
           clearcoat={1}
+          emissive="#99eeff"
+          emissiveIntensity={crystalEmissive * 0.8}
         />
       </mesh>
+      
+      {isNight && (
+        <pointLight
+          position={[0, 0, 0]}
+          color="#88ccff"
+          intensity={nightFactor * 0.15}
+          distance={0.3}
+          decay={2}
+        />
+      )}
     </group>
   );
 }
 
 export function Glacier({ position, scale = 1, rotation = [0, 0, 0] }: BuildingProps) {
+  const { nightFactor, isNight } = useDayNight();
   const iceTexture = useMemo(() => createIceTexture(), []);
+
+  const sparkleData = useMemo(() => {
+    const sparkles: {
+      pos: [number, number, number];
+      size: number;
+      color: string;
+      speed: number;
+    }[] = [];
+    for (let i = 0; i < 15; i++) {
+      sparkles.push({
+        pos: [
+          (Math.random() - 0.5) * 0.6,
+          0.02 + Math.random() * 0.15,
+          (Math.random() - 0.5) * 0.6,
+        ],
+        size: 0.005 + Math.random() * 0.005,
+        color: Math.random() > 0.5 ? '#ffffff' : '#aaddff',
+        speed: 0.5 + Math.random() * 2,
+      });
+    }
+    return sparkles;
+  }, []);
+
+  const sparkleRefs = useRef<(THREE.Mesh | null)[]>([]);
+
+  useFrame((state) => {
+    sparkleRefs.current.forEach((ref, i) => {
+      if (ref && sparkleData[i]) {
+        const t = state.clock.elapsedTime * sparkleData[i].speed;
+        const pulse = 0.3 + Math.sin(t + i) * 0.7;
+        const mat = ref.material as THREE.MeshStandardMaterial;
+        mat.emissiveIntensity = isNight ? nightFactor * pulse : 0.2;
+      }
+    });
+  });
+
+  const groundEmissive = isNight ? nightFactor * 0.2 : 0.05;
 
   return (
     <group position={position} scale={scale} rotation={rotation}>
@@ -144,6 +226,8 @@ export function Glacier({ position, scale = 1, rotation = [0, 0, 0] }: BuildingP
           transparent
           opacity={0.7}
           roughness={0.2}
+          emissive="#88bbdd"
+          emissiveIntensity={groundEmissive}
         />
       </mesh>
 
@@ -154,9 +238,11 @@ export function Glacier({ position, scale = 1, rotation = [0, 0, 0] }: BuildingP
           transparent
           opacity={0.5}
           roughness={0.1}
-          transmission={0.4}
+          transmission={isNight ? 0.2 + nightFactor * 0.2 : 0.4}
           thickness={0.5}
           clearcoat={0.8}
+          emissive="#6699cc"
+          emissiveIntensity={groundEmissive * 1.5}
         />
       </mesh>
 
@@ -171,25 +257,35 @@ export function Glacier({ position, scale = 1, rotation = [0, 0, 0] }: BuildingP
       <IceCrystal position={[-0.22, 0.01, -0.15]} scale={0.9} rotation={[-0.3, 0.6, 0.1]} />
       <IceCrystal position={[0, 0.005, 0.22]} scale={0.7} rotation={[0.1, 0.1, 0.8]} />
 
-      {Array.from({ length: 10 }).map((_, i) => (
+      {sparkleData.map((sparkle, i) => (
         <mesh
           key={`sparkle-${i}`}
-          position={[
-            (Math.random() - 0.5) * 0.6,
-            0.02 + Math.random() * 0.15,
-            (Math.random() - 0.5) * 0.6,
-          ]}
+          ref={(el) => (sparkleRefs.current[i] = el)}
+          position={sparkle.pos}
         >
-          <sphereGeometry args={[0.005 + Math.random() * 0.005, 4, 4]} />
+          <sphereGeometry args={[sparkle.size, 4, 4]} />
           <meshStandardMaterial
-            color="#ffffff"
+            color={sparkle.color}
             emissive="#88ccff"
-            emissiveIntensity={0.8 + Math.random() * 0.8}
+            emissiveIntensity={isNight ? nightFactor * 0.8 : 0.3}
             transparent
-            opacity={0.7 + Math.random() * 0.3}
+            opacity={isNight ? 0.7 + nightFactor * 0.3 : 0.5}
+            toneMapped={false}
           />
         </mesh>
       ))}
+
+      {isNight && (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
+          <circleGeometry args={[0.35, 24]} />
+          <meshBasicMaterial
+            color="#4488aa"
+            transparent
+            opacity={nightFactor * 0.15}
+            depthWrite={false}
+          />
+        </mesh>
+      )}
     </group>
   );
 }

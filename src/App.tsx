@@ -4,10 +4,12 @@ import { StatusBar } from './components/UI/StatusBar';
 import { HintText } from './components/UI/HintText';
 import { DisasterAlert } from './components/UI/DisasterAlert';
 import { DisasterInfoPanel } from './components/UI/DisasterInfoPanel';
+import { TimeControlPanel } from './components/UI/TimeControlPanel';
 import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
+import { DayNightProvider } from './contexts/DayNightContext';
 
-function App() {
+function AppContent() {
   const { gameState, selectTool, addBuilding, damageBuildings, removeBuildings, removeBuilding, resetBuildings } = useGameState();
   
   const {
@@ -60,10 +62,20 @@ function App() {
 
       <DisasterInfoPanel />
 
+      <TimeControlPanel />
+
       <div className="fixed bottom-4 right-4 z-10 text-white/30 text-xs">
         <p>🌍 Planet Rebirth Simulator</p>
       </div>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <DayNightProvider initialTime={0.3} initialSpeed={1}>
+      <AppContent />
+    </DayNightProvider>
   );
 }
 
