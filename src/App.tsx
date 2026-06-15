@@ -3,13 +3,21 @@ import { BuildPanel } from './components/UI/BuildPanel';
 import { StatusBar } from './components/UI/StatusBar';
 import { HintText } from './components/UI/HintText';
 import { DisasterAlert } from './components/UI/DisasterAlert';
+import { DisasterInfoPanel } from './components/UI/DisasterInfoPanel';
 import { useGameState } from './hooks/useGameState';
 import { useDisasters } from './hooks/useDisasters';
 
 function App() {
   const { gameState, selectTool, addBuilding, damageBuildings, removeBuildings, removeBuilding, resetBuildings } = useGameState();
   
-  const { activeDisasters, recentDisaster, triggerRandomDisaster } = useDisasters({
+  const {
+    activeDisasters,
+    recentDisaster,
+    currentWarning,
+    warningCountdown,
+    triggerRandomDisaster,
+    dismissWarning,
+  } = useDisasters({
     buildings: gameState.buildings,
     onDamageBuildings: damageBuildings,
     onRemoveBuildings: removeBuildings,
@@ -42,7 +50,15 @@ function App() {
 
       <HintText />
 
-      <DisasterAlert disaster={recentDisaster} onTriggerRandom={triggerRandomDisaster} />
+      <DisasterAlert
+        disaster={recentDisaster}
+        warning={currentWarning}
+        warningCountdown={warningCountdown}
+        onTriggerRandom={triggerRandomDisaster}
+        onDismissWarning={dismissWarning}
+      />
+
+      <DisasterInfoPanel />
 
       <div className="fixed bottom-4 right-4 z-10 text-white/30 text-xs">
         <p>🌍 Planet Rebirth Simulator</p>

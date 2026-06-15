@@ -34,18 +34,30 @@ export interface BuildingConfig {
   baseHealth: number;
 }
 
+export interface DisasterDamageInfo {
+  buildingType: BuildingType;
+  damageMultiplier: number;
+  description: string;
+}
+
 export interface DisasterConfig {
   type: DisasterType;
   name: string;
   icon: string;
   color: string;
+  warningColor: string;
   description: string;
+  longDescription: string;
+  causes: string[];
   damageRadius: number;
   baseDamage: number;
-  affectedBuildings: BuildingType[];
+  affectedBuildings: DisasterDamageInfo[];
   minInterval: number;
   maxInterval: number;
   probability: number;
+  warningTime: number;
+  tips: string[];
+  historicalEvents: string[];
 }
 
 export interface ActiveDisaster {
@@ -57,3 +69,13 @@ export interface ActiveDisaster {
   intensity: number;
   affectedBuildingIds: string[];
 }
+
+export interface DisasterWarning {
+  id: string;
+  type: DisasterType;
+  estimatedPosition: [number, number, number];
+  countdown: number;
+  estimatedIntensity: number;
+  timestamp: number;
+}
+
