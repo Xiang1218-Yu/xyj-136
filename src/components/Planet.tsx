@@ -3,11 +3,12 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { PLANET_RADIUS } from '../utils/helpers';
 import { createPlanetTexture, createCloudTexture } from '../utils/texture';
-import { Building } from '../types/game';
+import { Building, ActiveDisaster } from '../types/game';
 import { Forest } from './Buildings/Forest';
 import { Glacier } from './Buildings/Glacier';
 import { City } from './Buildings/City';
 import { Grassland } from './Buildings/Grassland';
+import { DisasterEffect } from './DisasterEffect';
 
 interface PlanetProps {
   onClick?: (point: THREE.Vector3) => void;
@@ -15,6 +16,7 @@ interface PlanetProps {
   onPointerOut?: () => void;
   lifeIndex: number;
   buildings?: Building[];
+  disasters?: ActiveDisaster[];
 }
 
 function createTerrainGeometry(radius: number, widthSeg: number, heightSeg: number): THREE.SphereGeometry {
@@ -37,7 +39,25 @@ function createTerrainGeometry(radius: number, widthSeg: number, heightSeg: numb
   return geometry;
 }
 
-export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildings = [] }: PlanetProps) {
+function BuildingHealthBar({ health, maxHealth }: { health: number; maxHealth: number }) {
+  const percent = health / maxHealth;
+  const color = percent > 0.6 ? '#7cfc00' : percent > 0.3 ? '#ffa500' : '#ff6b6b';
+  
+  return (
+    <group position={[0, 0.18, 0]}>
+      <mesh position={[0, 0, 0]}>
+        <planeGeometry args={[0.2, 0.025]} />
+        <meshBasicMaterial color="#333333" transparent opacity={0.7} />
+      </mesh>
+      <mesh position={[-(0.1 - 0.1 * percent), 0, 0.001]}>
+        <planeGeometry args={[0.2 * percent, 0.02]} />
+        <meshBasicMaterial color={color} transparent opacity={0.9} />
+      </mesh>
+    </group>
+  );
+}
+
+export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildings = [], disasters = [] }: PlanetProps) {
   const groupRef = useRef<THREE.Group>(null);
   const planetRef = useRef<THREE.Mesh>(null);
   const cloudsRef = useRef<THREE.Mesh>(null);
@@ -137,36 +157,42 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
           normal
         );
 
-        if (building.type === 'forest') {
-          return (
-            <group key={building.id} position={position} quaternion={quaternion} scale={building.scale}>
-              <Forest position={[0, 0, 0]} scale={1} />
+        const healthPercent = building.health / building.maxHealth;
+        const isDamaged = building.damaged;
+        const buildingOpacity = isDamaged ? 0.7 + Math.sin(Date.now() * 0.005) * 0.1 : 1;
+
+        let BuildingComponent;
+        if (building.type === 'forest') BuildingComponent = Forest;
+        else if (building.type === 'glacier') BuildingComponent = Glacier;
+        else if (building.type === 'city') BuildingComponent = City;
+        else BuildingComponent = Grassland;
+
+        return (
+          <group 
+            key={building.id} 
+            position={position} 
+            quaternion={quaternion} 
+            scale={building.scale}
+          >
+            <group scale={healthPercent < 0.3 ? [0.85, 0.85, 0.85] : [1, 1, 1]}>
+              <BuildingComponent position={[0, 0, 0]} scale={1} />
             </group>
-          );
-        }
-        if (building.type === 'glacier') {
-          return (
-            <group key={building.id} position={position} quaternion={quaternion} scale={building.scale}>
-              <Glacier position={[0, 0, 0]} scale={1} />
-            </group>
-          );
-        }
-        if (building.type === 'city') {
-          return (
-            <group key={building.id} position={position} quaternion={quaternion} scale={building.scale}>
-              <City position={[0, 0, 0]} scale={1} />
-            </group>
-          );
-        }
-        if (building.type === 'grassland') {
-          return (
-            <group key={building.id} position={position} quaternion={quaternion} scale={building.scale}>
-              <Grassland position={[0, 0, 0]} scale={1} />
-            </group>
-          );
-        }
-        return null;
+            {isDamaged && (
+              <BuildingHealthBar health={building.health} maxHealth={building.maxHealth} />
+            )}
+            {isDamaged && (
+              <mesh position={[0, 0.08, 0]}>
+                <sphereGeometry args={[0.02 + Math.random() * 0.01, 8, 8]} />
+                <meshBasicMaterial color="#666666" transparent opacity={0.6} />
+              </mesh>
+            )}
+          </group>
+        );
       })}
+
+      {disasters.map((disaster) => (
+        <DisasterEffect key={disaster.id} disaster={disaster} />
+      ))}
 
       <mesh scale={1.06}>
         <sphereGeometry args={[PLANET_RADIUS, 64, 64]} />
@@ -203,3 +229,4 @@ export function Planet({ onClick, onPointerOver, onPointerOut, lifeIndex, buildi
     </group>
   );
 }
+

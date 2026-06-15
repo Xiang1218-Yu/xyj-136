@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { Planet } from './Planet';
 import { Moon } from './Moon';
 import { Starfield } from './Starfield';
-import { Building, BuildingType } from '../types/game';
+import { Building, BuildingType, ActiveDisaster } from '../types/game';
 import { PLANET_RADIUS } from '../utils/helpers';
 
 interface GameCanvasProps {
@@ -14,6 +14,7 @@ interface GameCanvasProps {
   selectedTool: BuildingType | null;
   onAddBuilding: (type: BuildingType, position: [number, number, number]) => void;
   lifeIndex: number;
+  disasters?: ActiveDisaster[];
 }
 
 function SceneContent({
@@ -21,6 +22,7 @@ function SceneContent({
   selectedTool,
   onAddBuilding,
   lifeIndex,
+  disasters = [],
 }: GameCanvasProps) {
   const [hovered, setHovered] = useState(false);
 
@@ -53,6 +55,7 @@ function SceneContent({
         onPointerOut={() => setHovered(false)}
         lifeIndex={lifeIndex}
         buildings={buildings}
+        disasters={disasters}
       />
 
       <OrbitControls

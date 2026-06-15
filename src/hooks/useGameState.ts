@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { Building, BuildingType, GameState } from '../types/game';
-import { generateId, calculateLifeIndex, PLANET_RADIUS } from '../utils/helpers';
+import { generateId, calculateLifeIndex, PLANET_RADIUS, BUILDING_CONFIGS } from '../utils/helpers';
 
 function createInitialBuildings(): Building[] {
   const buildings: Building[] = [];
@@ -14,12 +14,16 @@ function createInitialBuildings(): Building[] {
 
   forestPositions.forEach((pos, i) => {
     const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+    const baseHealth = BUILDING_CONFIGS.forest.baseHealth;
     buildings.push({
       id: `forest-${i}`,
       type: 'forest',
       position: [normalized.x, normalized.y, normalized.z],
       scale: 2,
       rotation: [0, Math.random() * Math.PI * 2, 0],
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damaged: false,
     });
   });
 
@@ -30,12 +34,16 @@ function createInitialBuildings(): Building[] {
 
   glacierPositions.forEach((pos, i) => {
     const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+    const baseHealth = BUILDING_CONFIGS.glacier.baseHealth;
     buildings.push({
       id: `glacier-${i}`,
       type: 'glacier',
       position: [normalized.x, normalized.y, normalized.z],
       scale: 2,
       rotation: [0, Math.random() * Math.PI * 2, 0],
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damaged: false,
     });
   });
 
@@ -46,12 +54,16 @@ function createInitialBuildings(): Building[] {
 
   cityPositions.forEach((pos, i) => {
     const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+    const baseHealth = BUILDING_CONFIGS.city.baseHealth;
     buildings.push({
       id: `city-${i}`,
       type: 'city',
       position: [normalized.x, normalized.y, normalized.z],
       scale: 2,
       rotation: [0, Math.random() * Math.PI * 2, 0],
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damaged: false,
     });
   });
 
@@ -63,26 +75,35 @@ function createInitialBuildings(): Building[] {
 
   grasslandPositions.forEach((pos, i) => {
     const normalized = new THREE.Vector3(...pos).normalize().multiplyScalar(PLANET_RADIUS);
+    const baseHealth = BUILDING_CONFIGS.grassland.baseHealth;
     buildings.push({
       id: `grassland-${i}`,
       type: 'grassland',
       position: [normalized.x, normalized.y, normalized.z],
       scale: 2,
       rotation: [0, Math.random() * Math.PI * 2, 0],
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damaged: false,
     });
   });
 
   return buildings;
 }
 
+function updateCountsAndLifeIndex(buildings: Building[]) {
+  const forestCount = buildings.filter(b => b.type === 'forest').length;
+  const glacierCount = buildings.filter(b => b.type === 'glacier').length;
+  const cityCount = buildings.filter(b => b.type === 'city').length;
+  const grasslandCount = buildings.filter(b => b.type === 'grassland').length;
+  const lifeIndex = calculateLifeIndex(forestCount, glacierCount, cityCount, grasslandCount);
+  return { forestCount, glacierCount, cityCount, grasslandCount, lifeIndex };
+}
+
 export function useGameState() {
   const [gameState, setGameState] = useState<GameState>(() => {
     const initialBuildings = createInitialBuildings();
-    const forestCount = initialBuildings.filter(b => b.type === 'forest').length;
-    const glacierCount = initialBuildings.filter(b => b.type === 'glacier').length;
-    const cityCount = initialBuildings.filter(b => b.type === 'city').length;
-    const grasslandCount = initialBuildings.filter(b => b.type === 'grassland').length;
-    const lifeIndex = calculateLifeIndex(forestCount, glacierCount, cityCount, grasslandCount);
+    const { forestCount, glacierCount, cityCount, grasslandCount, lifeIndex } = updateCountsAndLifeIndex(initialBuildings);
 
     return {
       buildings: initialBuildings,
@@ -100,31 +121,51 @@ export function useGameState() {
   }, []);
 
   const addBuilding = useCallback((type: BuildingType, position: [number, number, number]) => {
+    const baseHealth = BUILDING_CONFIGS[type].baseHealth;
     const building: Building = {
       id: generateId(),
       type,
       position,
       scale: 1,
       rotation: [0, Math.random() * Math.PI * 2, 0],
+      health: baseHealth,
+      maxHealth: baseHealth,
+      damaged: false,
     };
 
     setGameState(prev => {
       const newBuildings = [...prev.buildings, building];
-      const forestCount = newBuildings.filter(b => b.type === 'forest').length;
-      const glacierCount = newBuildings.filter(b => b.type === 'glacier').length;
-      const cityCount = newBuildings.filter(b => b.type === 'city').length;
-      const grasslandCount = newBuildings.filter(b => b.type === 'grassland').length;
-      const lifeIndex = calculateLifeIndex(forestCount, glacierCount, cityCount, grasslandCount);
+      const counts = updateCountsAndLifeIndex(newBuildings);
+      return { ...prev, buildings: newBuildings, ...counts };
+    });
+  }, []);
 
-      return {
-        ...prev,
-        buildings: newBuildings,
-        forestCount,
-        glacierCount,
-        cityCount,
-        grasslandCount,
-        lifeIndex,
-      };
+  const damageBuildings = useCallback((damages: { id: string; damage: number }[]) => {
+    setGameState(prev => {
+      const damageMap = new Map(damages.map(d => [d.id, d.damage]));
+      const newBuildings = prev.buildings.map(b => {
+        const damage = damageMap.get(b.id);
+        if (damage !== undefined) {
+          const newHealth = Math.max(0, b.health - damage);
+          return {
+            ...b,
+            health: newHealth,
+            damaged: newHealth < b.maxHealth * 0.6,
+          };
+        }
+        return b;
+      });
+      const counts = updateCountsAndLifeIndex(newBuildings);
+      return { ...prev, buildings: newBuildings, ...counts };
+    });
+  }, []);
+
+  const removeBuildings = useCallback((ids: string[]) => {
+    setGameState(prev => {
+      const idSet = new Set(ids);
+      const newBuildings = prev.buildings.filter(b => !idSet.has(b.id));
+      const counts = updateCountsAndLifeIndex(newBuildings);
+      return { ...prev, buildings: newBuildings, ...counts };
     });
   }, []);
 
@@ -144,6 +185,9 @@ export function useGameState() {
     gameState,
     selectTool,
     addBuilding,
+    damageBuildings,
+    removeBuildings,
     resetBuildings,
   };
 }
+
